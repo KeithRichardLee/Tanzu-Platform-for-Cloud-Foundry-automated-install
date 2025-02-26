@@ -227,11 +227,11 @@ if($deployOpsManager -eq 1) {
     $cluster = Get-Cluster -Server $viConnection -Name $VMCluster
     $datacenter = $cluster | Get-Datacenter
     $vmhost = $cluster | Get-VMHost | Select -First 1
-	$resourcepool = Get-ResourcePool -Server $viConnection -Name $VMResourcePool
+    $resourcepool = Get-ResourcePool -Server $viConnection -Name $VMResourcePool
 	
-	# future work, change below to use "om vm-lifecycle create-vm"
+    # future work, change below to use "om vm-lifecycle create-vm"
 	
-	# Deploy Ops Manager
+    # Deploy Ops Manager
     $opsMgrOvfCOnfig = Get-OvfConfiguration $OpsManOVA
     $opsMgrOvfCOnfig.Common.ip0.Value = $OpsManagerIPAddress
     $opsMgrOvfCOnfig.Common.netmask0.Value = $OpsManagerNetmask
@@ -252,21 +252,21 @@ if($deployOpsManager -eq 1) {
 
 if($setupOpsManager -eq 1) {
     My-Logger "Waiting for Tanzu Ops Manager to come online ..."
-	while (1) {
-		try {
-			$results = Invoke-WebRequest -Uri https://$OpsManagerHostname -SkipCertificateCheck -Method GET
-			if ($results.StatusCode -eq 200) {
-				break
-			}
-		} catch {
-			My-Logger "Tanzu Ops Manager is not ready yet, sleeping 30 seconds ..."
-			Start-Sleep 30
-		}
-	}	
+    while (1) {
+      try {
+          $results = Invoke-WebRequest -Uri https://$OpsManagerHostname -SkipCertificateCheck -Method GET
+          if ($results.StatusCode -eq 200) {
+              break
+          }
+      } catch {
+          My-Logger "Tanzu Ops Manager is not ready yet, sleeping 30 seconds ..."
+          Start-Sleep 30
+      }
+    }	
 	
-	My-Logger "Setting up Tanzu Ops Manager authentication ..."
+    My-Logger "Setting up Tanzu Ops Manager authentication ..."
       
-	$configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-authentication --username $OpsManagerAdminUsername --password $OpsManagerAdminPassword --decryption-passphrase $OpsManagerDecryptionPassword"
+    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-authentication --username $OpsManagerAdminUsername --password $OpsManagerAdminPassword --decryption-passphrase $OpsManagerDecryptionPassword"
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
 }
