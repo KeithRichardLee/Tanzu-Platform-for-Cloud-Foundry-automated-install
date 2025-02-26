@@ -283,12 +283,12 @@ az-configuration:
 "@
     # Process AZ
     $singleAZString = ""
-	$BOSHAZ.GetEnumerator() | Sort-Object -Property Value | Foreach-Object {
-		$singleAZString += "- name: "+$_.Name+"`n"
-		$singleAZString += "  iaas_configuration_name: "+$_.Value['iaas_name']+"`n"
-		$singleAZString += "  clusters:`n"
-		$singleAZString += "  - cluster: "+$_.Value['cluster']+"`n"
-		$singleAZString += "    resource_pool: "+$_.Value['resource_pool']+"`n"
+    $BOSHAZ.GetEnumerator() | Sort-Object -Property Value | Foreach-Object {
+        $singleAZString += "- name: "+$_.Name+"`n"
+        $singleAZString += "  iaas_configuration_name: "+$_.Value['iaas_name']+"`n"
+        $singleAZString += "  clusters:`n"
+        $singleAZString += "  - cluster: "+$_.Value['cluster']+"`n"
+        $singleAZString += "    resource_pool: "+$_.Value['resource_pool']+"`n"
     }
 
     # Process Networks
@@ -366,12 +366,12 @@ properties-configuration:
 
 if($setupTPCF -eq 1) {
     
-	# Get product name and version
-	$TPCFProductName = & "$OMCLI" product-metadata --product-path $TPCFTile --product-name
-	$TPCFVersion = & "$OMCLI" product-metadata --product-path $TPCFTile --product-version
+    # Get product name and version
+    $TPCFProductName = & "$OMCLI" product-metadata --product-path $TPCFTile --product-name
+    $TPCFVersion = & "$OMCLI" product-metadata --product-path $TPCFTile --product-version
 
-	# Upload tile
-	My-Logger "Uploading TPCF Tile to Tanzu Ops Manager (can take up to 15 mins) ..."
+    # Upload tile
+    My-Logger "Uploading TPCF Tile to Tanzu Ops Manager (can take up to 15 mins) ..."
     $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword upload-product --product $TPCFTile"
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
@@ -383,17 +383,17 @@ if($setupTPCF -eq 1) {
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
 	
 	
-	# Generate wildcard cert and key
+    # Generate wildcard cert and key
     $domainlist = "*.apps.$TPCFDomain,*.login.sys.$TPCFDomain,*.uaa.sys.$TPCFDomain,*.sys.$TPCFDomain,*.$TPCFDomain"
-	$TPCFcert_and_key = & "$OMCLI" -k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword generate-certificate -d $domainlist
+    $TPCFcert_and_key = & "$OMCLI" -k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword generate-certificate -d $domainlist
 	
-	$pattern = "-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----\\n"
+    $pattern = "-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----\\n"
     $TPCFcert = [regex]::Match($TPCFcert_and_key, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
 	
-	$pattern = "-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----\\n"
+    $pattern = "-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----\\n"
     $TPCFkey = [regex]::Match($TPCFcert_and_key, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
     
-	# Create TPCF config yaml
+    # Create TPCF config yaml
     $TPCFPayload = @"
 ---
 product-name: cf
@@ -441,7 +441,7 @@ resource-config:
     $TPCFyaml = "tpcf-config.yaml"
     $TPCFPayload > $TPCFyaml	
 	
-	My-Logger "Applying TPCF configuration ..."
+    My-Logger "Applying TPCF configuration ..."
     $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-product --config $TPCFyaml"
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
