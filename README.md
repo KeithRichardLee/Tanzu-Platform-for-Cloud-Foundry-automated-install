@@ -127,7 +127,7 @@ Congratualations you now have installed and configured Tanzu Platform for Cloud 
   - cf CLI
     - [Install cf CLI](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/10-0/tpcf/install-go-cli.html)
     - [Login](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/10-0/tpcf/getting-started.html) eg
-      - `cf login -a api.sys.tanzu.lab --skip-ssl-validation`
+      - `cf login -a api.sys.tpcf.tanzu.lab --skip-ssl-validation`
     - Create an Org eg
       - `cf create-org tanzu-demos-org`
     - Create a Space eg
