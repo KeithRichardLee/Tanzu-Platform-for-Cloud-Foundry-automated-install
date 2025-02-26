@@ -51,6 +51,7 @@ $BOSHvCenterEpemeralDatastores = $VMDatastore
 $BOSHvCenterVMFolder = "tpcf_vms"
 $BOSHvCenterTemplateFolder = "tpcf_templates"
 $BOSHvCenterDiskFolder = "tpcf_disk"
+$BOSHNetworkReservedRange = "FILL-ME-IN" #reserved IPs, including the Ops Manager IP
 
 # AZ Definitions
 $BOSHAZ = @{
@@ -66,7 +67,7 @@ $BOSHNetwork = @{
     "tpcf-network" = @{
         portgroupname = $VMNetwork 
         cidr = $VMNetworkCIDR
-        reserved_range = "FILL-ME-IN" #reserved IPs, including the Ops Manager IP
+        reserved_range = $BOSHNetworkReservedRange
         dns = $VMDNS
         gateway = $VMGateway
         az = "az1"
