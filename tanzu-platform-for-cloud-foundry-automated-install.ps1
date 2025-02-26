@@ -168,28 +168,28 @@ if($confirmDeployment -eq 1) {
     Write-Host -NoNewline -ForegroundColor Green "AZ Resource Pool: "
     Write-Host -ForegroundColor White $($BOSHAZ[$BOSHAZAssignment].resource_pool)
     
-	Write-Host -ForegroundColor Green "`nNetwork Config"
+    Write-Host -ForegroundColor Green "`nNetwork Config"
     Write-Host -NoNewline -ForegroundColor Green "Network name: "
     Write-Host -ForegroundColor White $BOSHNetwork.Keys
     Write-Host -NoNewline -ForegroundColor Green "Network Portgroup: "
     Write-Host -ForegroundColor White $($BOSHNetwork[$BOSHNetworkAssignment].portgroupname)	
-	Write-Host -NoNewline -ForegroundColor Green "Network CIDR: "
+    Write-Host -NoNewline -ForegroundColor Green "Network CIDR: "
     Write-Host -ForegroundColor White $($BOSHNetwork[$BOSHNetworkAssignment].cidr)
-	Write-Host -NoNewline -ForegroundColor Green "Network Gateway: "
+    Write-Host -NoNewline -ForegroundColor Green "Network Gateway: "
     Write-Host -ForegroundColor White $($BOSHNetwork[$BOSHNetworkAssignment].gateway)
-	Write-Host -NoNewline -ForegroundColor Green "Network DNS: "
+    Write-Host -NoNewline -ForegroundColor Green "Network DNS: "
     Write-Host -ForegroundColor White $($BOSHNetwork[$BOSHNetworkAssignment].dns)
-	Write-Host -NoNewline -ForegroundColor Green "Reserved IP range: "
+    Write-Host -NoNewline -ForegroundColor Green "Reserved IP range: "
     Write-Host -ForegroundColor White $($BOSHNetwork[$BOSHNetworkAssignment].reserved_range)
 
     Write-Host -NoNewline -ForegroundColor Green "`nNTP: "
     Write-Host -ForegroundColor White $VMNTP
     Write-Host -NoNewline -ForegroundColor Green "Enable human readable names: "
-	Write-Host -ForegroundColor White "True"
-	Write-Host -NoNewline -ForegroundColor Green "ICMP checks enabled: "
-	Write-Host -ForegroundColor White "True"
-	Write-Host -NoNewline -ForegroundColor Green "Include Tanzu Ops Manager Root CA in Trusted Certs: "
-	Write-Host -ForegroundColor White "True"
+    Write-Host -ForegroundColor White "True"
+    Write-Host -NoNewline -ForegroundColor Green "ICMP checks enabled: "
+    Write-Host -ForegroundColor White "True"
+    Write-Host -NoNewline -ForegroundColor Green "Include Tanzu Ops Manager Root CA in Trusted Certs: "
+    Write-Host -ForegroundColor White "True"
 
     Write-Host -ForegroundColor Yellow "`n---- TPCF Configuration ----"
     Write-Host -NoNewline -ForegroundColor Green "AZ: "
@@ -204,7 +204,7 @@ if($confirmDeployment -eq 1) {
     Write-Host -ForegroundColor White $TPCFGoRouter
     Write-Host -NoNewline -ForegroundColor Green "GoRouter wildcard cert SAN: "
     $domainlist = "*.apps.$TPCFDomain,*.login.sys.$TPCFDomain,*.uaa.sys.$TPCFDomain,*.sys.$TPCFDomain,*.$TPCFDomain"    
-	Write-Host -ForegroundColor White $domainlist
+    Write-Host -ForegroundColor White $domainlist
 
     Write-Host -ForegroundColor Magenta "`nWould you like to proceed with this deployment?`n"
     $answer = Read-Host -Prompt "Do you accept (Y or N)"
