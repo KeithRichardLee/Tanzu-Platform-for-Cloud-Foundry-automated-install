@@ -25,11 +25,11 @@ ESXi host/cluster (ESXi v7.x or v8.x) with the following spare capacity...
 
 Networking
 - IP addresses
-  - A subnet with approximatly 10 free IP addresses
+  - A subnet with approximately 10 free IP addresses
     - 1x Ops Man
     - 1x BOSH Director
     - 5x TPCF (gorouter, blobstore, compute, control, database)
-    - x various errands, compliations, workers
+    - x various errands, compilations, workers
 - DNS service
   - Tanzu Operations Manager eg opsman.tanzu.lab
   - TPCF system wildcard eg *.sys.tanzu.lab which will resolve to the gorouter IP
@@ -116,7 +116,7 @@ $TPCFCredHubSecret = "my-super-safe-password!" # must be 20 or more characters
 
 Installation takes approx 90 minutes
 
-Congratualations you now have installed and configured Tanzu Platform for Cloud Foundry. Let's go see it in action!
+Congratulations you now have installed and configured Tanzu Platform for Cloud Foundry. Let's go see it in action!
 
 
 ## Deploy a sample app
