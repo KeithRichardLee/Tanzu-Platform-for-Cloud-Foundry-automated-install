@@ -146,6 +146,3 @@ Congratualations you now have installed and configured Tanzu Platform for Cloud 
     - `cf push`
   - Verify app is running, retrieve route, and open app
     - `cf apps` 
-
-
-The whole deploy process takes approx 90-100 minutes
