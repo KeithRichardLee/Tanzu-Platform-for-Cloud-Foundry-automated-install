@@ -32,8 +32,8 @@ Networking
     - x various errands, compilations, workers
 - DNS service
   - Tanzu Operations Manager eg opsman.tanzu.lab
-  - TPCF system wildcard eg *.sys.tanzu.lab which will resolve to the gorouter IP
-  - TPCF apps wildcard eg *.apps.tanzu.lab which will resolve to the gorouter IP
+  - TPCF system wildcard eg *.sys.tpcf.tanzu.lab which will resolve to the gorouter IP
+  - TPCF apps wildcard eg *.apps.tpcf.tanzu.lab which will resolve to the gorouter IP
 - NTP service
 
 Workstation/jump-host
