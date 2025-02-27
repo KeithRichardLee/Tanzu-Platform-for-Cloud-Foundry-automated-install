@@ -1,17 +1,20 @@
-# PowerShell script which results in the deployment of Tanzu Platform for Cloud Foundry
+# PowerShell script which results in the deployment of VMware Tanzu Platform for Cloud Foundry
 # 
 # Script will... 
-# - Deploy Tanzu Operations Manager
-# - Configure authentication for Tanzu Operations Manager
+# - Deploy VMware Tanzu Operations Manager
+# - Configure authentication for VMware Tanzu Operations Manager
 # - Configure and deploy BOSH Director
-# - Configure and deploy Tanzu Platform for Cloud Foundry
+# - Configure and deploy VMware Tanzu Platform for Cloud Foundry
+# - Optionally; Install Tanzu AI Solutions
+#    - Configure and deploy VMware Postgres
+#    - Configure and deploy GenAI on Tanzu Platform
 #
 # Script based off the orginal work of William Lam's (Broadcom) nested vSphere 6 PKS with NSX lab https://github.com/lamw/vmware-pks-automated-lab-deployment/
 
 # Full Path to Ops Manager OVA, TPCF tile, and OM CLI
-$OpsManOVA = "C:\Users\Administrator\Downloads\TPCF\ops-manager-vsphere-3.0.37+LTS-T.ova" #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware%20Tanzu%20Operations%20Manager
-$TPCFTile = "C:\Users\Administrator\Downloads\TPCF\srt-10.0.2-build.3.pivotal"            #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=Tanzu%20Platform%20for%20Cloud%20Foundry
-$OMCLI = "C:\Windows\System32\om.exe"                                                     #Download from https://github.com/pivotal-cf/om
+$OpsManOVA = "C:\Users\Administrator\Downloads\TPCF\ops-manager-vsphere-3.0.37+LTS-T.ova"  #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware%20Tanzu%20Operations%20Manager
+$TPCFTile  = "C:\Users\Administrator\Downloads\TPCF\srt-10.0.2-build.3.pivotal"            #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=Tanzu%20Platform%20for%20Cloud%20Foundry
+$OMCLI     = "C:\Windows\System32\om.exe"                                                  #Download from https://github.com/pivotal-cf/om
 
 # vCenter Server
 $VIServer = "FILL-ME-IN"
@@ -85,6 +88,16 @@ $TPCFCredHubSecret = "FILL-ME-IN" # must be 20 or more characters
 $TPCFAZ = $BOSHAZ.Keys
 $TPCFNetwork = $BOSHNetwork.Keys
 
+# Install Tanzu AI Solutions?
+$InstallTanzuAI = $false 
+
+# Full Path to Postgres and GenAI tiles (required for Tanzu AI Solutions)
+$PostgresTile = "C:\Users\Administrator\Downloads\TPCF\postgres-10.0.0-build.31.pivotal"   #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware+Tanzu+for+Postgres+on+Cloud+Foundry
+$GenAITile    = "C:\Users\Administrator\Downloads\TPCF\genai-10.0.2.pivotal"               #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=GenAI%20on%20Tanzu%20Platform%20for%20Cloud%20Foundry
+
+# Tanzu AI Solutions config 
+$OllamaChatModel = "gemma2:2b"
+
 
 #### DO NOT EDIT BEYOND HERE ####
 
@@ -97,6 +110,8 @@ $deployOpsManager = 1
 $setupOpsManager = 1
 $setupBOSHDirector = 1
 $setupTPCF = 1
+$setupPostgres = $InstallTanzuAI
+$setupGenAI = $InstallTanzuAI
 
 $StartTime = Get-Date
 
@@ -446,11 +461,138 @@ resource-config:
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
 
-    My-Logger "Installing TPCF (can take up to 60 minutes) ..."
+    # To improve install time, don't install TPCF just yet if postgres and GenAI tiles are to be installed also
+    if($InstallTanzuAI -eq 0) {
+        My-Logger "Installing TPCF (can take up to 60 minutes) ..."
+        $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes"
+        if($debug) { My-Logger "${OMCLI} $installArgs"}
+        $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
+    } 
+}
+
+if($setupPostgres -eq 1) {
+
+    # Get product name and version
+    $PostgresProductName = & "$OMCLI" product-metadata --product-path $PostgresTile --product-name
+    $PostgresVersion = & "$OMCLI" product-metadata --product-path $PostgresTile --product-version
+
+    # Upload tile
+    My-Logger "Uploading Postgres Tile to Tanzu Ops Manager (can take up to 15 mins) ..."
+    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword upload-product --product $PostgresTile"
+    if($debug) { My-Logger "${OMCLI} $configArgs"}
+    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+
+    # Stage tile
+    My-Logger "Adding Postgres Tile to Tanzu Ops Manager ..."
+    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword stage-product --product-name $PostgresProductName --product-version $PostgresVersion"
+    if($debug) { My-Logger "${OMCLI} $configArgs"}
+    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile	
+	
+    # Create Postgres config yaml
+    $PostgresPayload = @"
+---
+product-name: postgres
+product-properties:
+  .properties.plan_collection:
+    value:
+    - az_multi_select:
+      - $BOSHAZAssignment
+      cf_service_access: enable
+      name: on-demand-postgres-db
+network-properties:
+  network:
+    name: $BOSHNetworkAssignment
+  other_availability_zones:
+  - name: $BOSHAZAssignment
+  service_network:
+    name: $BOSHNetworkAssignment
+  singleton_availability_zone:
+    name: $BOSHAZAssignment
+"@	
+
+
+    $Postgresyaml = "postgres-config.yaml"
+    $PostgresPayload > $Postgresyaml	
+	
+    My-Logger "Applying Postgres configuration ..."
+    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-product --config $Postgresyaml"
+    if($debug) { My-Logger "${OMCLI} $configArgs"}
+    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+
+    My-Logger "Installing TPCF and Postgres ..."
     $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes"
     if($debug) { My-Logger "${OMCLI} $installArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
 }
+
+if($setupGenAI -eq 1) {
+
+    # Get product name and version
+    $GenAIProductName = & "$OMCLI" product-metadata --product-path $GenAITile --product-name
+    $GenAIVersion = & "$OMCLI" product-metadata --product-path $genAITile --product-version
+
+    # Upload tile
+    My-Logger "Uploading GenAI Tile to Tanzu Ops Manager (can take up to 15 mins) ..."
+    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword upload-product --product $GenAITile"
+    if($debug) { My-Logger "${OMCLI} $configArgs"}
+    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+
+    # Stage tile
+    My-Logger "Adding GenAI Tile to Tanzu Ops Manager ..."
+    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword stage-product --product-name $GenAIProductName --product-version $GenAIVersion"
+    if($debug) { My-Logger "${OMCLI} $configArgs"}
+    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile	
+	
+    # Create GenAI config yaml
+    $GenAIPayload = @"
+---
+product-name: genai
+product-properties:
+  .errands.ollama_models:
+    value:
+    - azs:
+      - $BOSHAZAssignment
+      model_capabilities:
+      - chat
+      model_name: $OllamaChatModel
+      vm_type: cpu
+    - azs:
+      - $BOSHAZAssignment
+      model_capabilities:
+      - embedding
+      model_name: nomic-embed-text
+      vm_type: cpu
+  .properties.database_source.service_broker.name:
+    value: postgres
+  .properties.database_source.service_broker.plan_name:
+    value: on-demand-postgres-db
+network-properties:
+  network:
+    name: $BOSHNetworkAssignment
+  other_availability_zones:
+  - name: $BOSHAZAssignment
+  service_network:
+    name: $BOSHNetworkAssignment
+  singleton_availability_zone:
+    name: $BOSHAZAssignment
+
+"@	
+
+    $GenAIyaml = "genai-config.yaml"
+    $GenAIPayload > $GenAIyaml	
+	
+    My-Logger "Applying GenAI configuration ..."
+    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-product --config $GenAIyaml"
+    if($debug) { My-Logger "${OMCLI} $configArgs"}
+    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+
+    My-Logger "Installing GenAI ..."
+    $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes"
+    if($debug) { My-Logger "${OMCLI} $installArgs"}
+    $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
+
+}
+
 
 $EndTime = Get-Date
 $duration = [math]::Round((New-TimeSpan -Start $StartTime -End $EndTime).TotalMinutes,2)
