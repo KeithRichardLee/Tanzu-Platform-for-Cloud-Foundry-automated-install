@@ -114,6 +114,19 @@ $TPCFDomain = "tpcf.tanzu.lab" # sys and apps subdomain will be added to this
 $TPCFCredHubSecret = "my-super-safe-password!" # must be 20 or more characters
 ```
 
+If wish to install Tanzu AI Solutions, change the flag to $true and update the other parameters where required
+```bash
+# Install Tanzu AI Solutions?
+$InstallTanzuAI = $false 
+
+# Full Path to Postgres and GenAI tiles (required for Tanzu AI Solutions)
+$PostgresTile = "C:\Users\Administrator\Downloads\TPCF\postgres-10.0.0-build.31.pivotal"   #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware+Tanzu+for+Postgres+on+Cloud+Foundry
+$GenAITile    = "C:\Users\Administrator\Downloads\TPCF\genai-10.0.2.pivotal"               #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=GenAI%20on%20Tanzu%20Platform%20for%20Cloud%20Foundry
+
+# Tanzu AI Solutions config 
+$OllamaChatModel = "gemma2:2b"
+```
+
 ## Run the script
 ```bash
 .\tanzu-platform-for-cloud-foundry-automated-install.ps1
