@@ -168,3 +168,6 @@ Congratulations you now have installed and configured Tanzu Platform for Cloud F
     - `cf push`
   - Verify app is running, retrieve route, and open app
     - `cf apps` 
+
+## Tanzu AI Solutions
+If you opted to install Tanzu AI Solutions, check out these guides [here](https://github.com/KeithRichardLee/VMware-Tanzu-Guides) to learn more about it and deploy sample apps
