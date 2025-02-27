@@ -477,7 +477,7 @@ if($setupPostgres -eq 1) {
     $PostgresVersion = & "$OMCLI" product-metadata --product-path $PostgresTile --product-version
 
     # Upload tile
-    My-Logger "Uploading Postgres Tile to Tanzu Ops Manager (can take up to 15 mins) ..."
+    My-Logger "Uploading Postgres Tile to Tanzu Ops Manager ..."
     $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword upload-product --product $PostgresTile"
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
@@ -519,7 +519,7 @@ network-properties:
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
 
-    My-Logger "Installing TPCF and Postgres ..."
+    My-Logger "Installing TPCF and Postgres (can take up to 60 mins) ..."
     $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes"
     if($debug) { My-Logger "${OMCLI} $installArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
@@ -532,7 +532,7 @@ if($setupGenAI -eq 1) {
     $GenAIVersion = & "$OMCLI" product-metadata --product-path $genAITile --product-version
 
     # Upload tile
-    My-Logger "Uploading GenAI Tile to Tanzu Ops Manager (can take up to 15 mins) ..."
+    My-Logger "Uploading GenAI Tile to Tanzu Ops Manager ..."
     $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword upload-product --product $GenAITile"
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
@@ -586,7 +586,7 @@ network-properties:
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
 
-    My-Logger "Installing GenAI ..."
+    My-Logger "Installing GenAI (can take up to 30 mins)..."
     $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes"
     if($debug) { My-Logger "${OMCLI} $installArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
