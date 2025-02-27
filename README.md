@@ -47,9 +47,9 @@ Workstation/jump-host
 - This repo cloned eg `git clone https://github.com/KeithRichardLee/Tanzu-Platform-for-Cloud-Foundry-automated-install.git`
 
 ## Download bits
-- VMware Tanzu Operations Manager (~ 6 GB)
+- VMware Tanzu Operations Manager 
 	- https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware%20Tanzu%20Operations%20Manager 
-- Small Footprint Tanzu Platform for Cloud Foundry (~ 18 GB)
+- Small Footprint Tanzu Platform for Cloud Foundry 
 	- https://support.broadcom.com/group/ecx/productdownloads?subfamily=Tanzu%20Platform%20for%20Cloud%20Foundry
 - OM CLI
   - https://github.com/pivotal-cf/om
