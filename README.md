@@ -53,6 +53,10 @@ Workstation/jump-host
 	- https://support.broadcom.com/group/ecx/productdownloads?subfamily=Tanzu%20Platform%20for%20Cloud%20Foundry
 - OM CLI
   - https://github.com/pivotal-cf/om
+- VMware Postgres (if installing Tanzu AI Solutions)
+  - https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware+Tanzu+for+Postgres+on+Cloud+Foundry
+- GenAI for Tanzu Platform (if installing Tanzu AI Solutions)
+  - https://support.broadcom.com/group/ecx/productdownloads?subfamily=GenAI%20on%20Tanzu%20Platform%20for%20Cloud%20Foundry
 
 ## Fill out required data in the script
 Update each instance of "FILL-ME-IN" in the script. See below for a worked example...
