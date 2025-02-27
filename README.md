@@ -15,7 +15,7 @@ Update: The script now has an option to install Tanzu AI Solutions after Tanzu P
     - Deploy VMware Tanzu Operations Manager (aka Ops Man)
     - Deploy BOSH Director 
     - Deploy Small Footprint Tanzu Platform for Cloud Foundry (aka TPCF)
-    - If enabled, will install Tanzu AI Solutions
+    - If enabled, will install Tanzu AI Solutions...
       - Deploy VMware Postgres
       - Deploy GenAI for Tanzu Platform
 
