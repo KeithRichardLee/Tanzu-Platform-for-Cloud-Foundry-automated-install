@@ -4,6 +4,8 @@ A powershell script that automates the install of Tanzu Platform for Cloud Found
 
 For a much more comprehensive automated install of Tanzu Platform for Cloud Foundry, which uses [Concourse](https://concourse-ci.org/), check out the [Platform Automation Toolkit for Tanzu](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/platform-automation-toolkit-for-tanzu/5-2/vmware-automation-toolkit/docs-index.html)
 
+Update: The script now has an option to install Tanzu AI Solutions after Tanzu Platform for Cloud Foundry
+
 ## High-level flow
 - Prepare env
 - Download bits
@@ -13,6 +15,9 @@ For a much more comprehensive automated install of Tanzu Platform for Cloud Foun
     - Deploy VMware Tanzu Operations Manager (aka Ops Man)
     - Deploy BOSH Director 
     - Deploy Small Footprint Tanzu Platform for Cloud Foundry (aka TPCF)
+    - If enabled, will install Tanzu AI Solutions
+      - Deploy VMware Postgres
+      - Deploy GenAI for Tanzu Platform
 
 ## Prepare env
 ESXi host/cluster (ESXi v7.x or v8.x) with the following spare capacity...
