@@ -136,7 +136,7 @@ $OllamaChatModel = "gemma2:2b"
 .\tanzu-platform-for-cloud-foundry-automated-install.ps1
 ```
 
-Installation takes approx 90 minutes
+Installation can take up to 1.5 hours (or up to 3 hours if installing Tanzu AI Solutions also). Install time depends on the performance of your underlying infrastructure. 
 
 Congratulations you now have installed and configured Tanzu Platform for Cloud Foundry. Let's go see it in action!
 
