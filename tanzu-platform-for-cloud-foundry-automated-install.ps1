@@ -221,6 +221,20 @@ if($confirmDeployment -eq 1) {
     $domainlist = "*.apps.$TPCFDomain,*.login.sys.$TPCFDomain,*.uaa.sys.$TPCFDomain,*.sys.$TPCFDomain,*.$TPCFDomain"    
     Write-Host -ForegroundColor White $domainlist
 
+    Write-Host -NoNewline -ForegroundColor Green "`nInstall Tanzu AI Solutions: "
+    if($InstallTanzuAI -eq 1) {
+        Write-Host -ForegroundColor White "Yes"
+        Write-Host -ForegroundColor Yellow "`n---- Tanzu AI Solutions Configuration ----"
+        Write-Host -NoNewline -ForegroundColor Green "Postgres tile path: "
+        Write-Host -ForegroundColor White $PostgresTile
+        Write-Host -NoNewline -ForegroundColor Green "GenAI tile path: "
+        Write-Host -ForegroundColor White $GenAITile
+        Write-Host -NoNewline -ForegroundColor Green "Ollama Chat Model: "
+        Write-Host -ForegroundColor White $OllamaChatModel
+    } else {
+        Write-Host -ForegroundColor White "No"
+    }
+
     Write-Host -ForegroundColor Magenta "`nWould you like to proceed with this deployment?`n"
     $answer = Read-Host -Prompt "Do you accept (Y or N)"
     if($answer -ne "Y" -or $answer -ne "y") {
