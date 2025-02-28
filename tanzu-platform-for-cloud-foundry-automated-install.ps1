@@ -586,10 +586,12 @@ network-properties:
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
 
-    My-Logger "Installing GenAI (can take up to 30 mins)..."
+    My-Logger "Installing GenAI (can take up to 60 mins)..."
     $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes"
     if($debug) { My-Logger "${OMCLI} $installArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
+
+    # to do; turn off errands already ran so install time is reduced
 
 }
 
