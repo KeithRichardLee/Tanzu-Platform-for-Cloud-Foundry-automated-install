@@ -333,10 +333,9 @@ networks-configuration:
         $singleNetworkString += "    subnets:`n"
         $singleNetworkString += "    - iaas_identifier: "+$_.Value['portgroupname']+"`n"
         $singleNetworkString += "      cidr: "+$_.Value['cidr']+"`n"
-        $singleNetworkString += "      gateway: "+$_.Value['gateway']+"`n"
-        $singleNetworkString += "      dns: "+$_.Value['dns']+"`n"
-        $singleNetworkString += "      cidr: "+$_.Value['cidr']+"`n"
         $singleNetworkString += "      reserved_ip_ranges: "+$_.Value['reserved_range']+"`n"
+        $singleNetworkString += "      dns: "+$_.Value['dns']+"`n"
+        $singleNetworkString += "      gateway: "+$_.Value['gateway']+"`n"
         $singleNetworkString += "      availability_zone_names:`n"
         $singleNetworkString += "      - "+$_.Value['az']+"`n"
     }
