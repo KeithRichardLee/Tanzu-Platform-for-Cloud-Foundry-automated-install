@@ -24,7 +24,7 @@ $VIPassword = "FILL-ME-IN"
 # General deployment configuration
 $VirtualSwitchType = "VSS" #VSS or VDS
 $VMNetwork = "FILL-ME-IN" #portgroup name
-$VMNetworkCIDR = "FILL-ME-IN"
+$VMNetworkCIDR = "FILL-ME-IN" # eg "10.0.70.0/24"
 $VMNetmask = "FILL-ME-IN"
 $VMGateway = "FILL-ME-IN"
 $VMDNS = "FILL-ME-IN"
