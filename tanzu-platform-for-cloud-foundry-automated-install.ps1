@@ -354,7 +354,7 @@ iaas-configurations:
 - name: vCenter
   vcenter_host: $VIServer
   vcenter_username: $BOSHvCenterUsername
-  vcenter_password: $BOSHvCenterPassword 
+  vcenter_password: $BOSHvCenterPassword
   datacenter: $BOSHvCenterDatacenter
   disk_type: thin
   ephemeral_datastores_string: $BOSHvCenterEpemeralDatastores
