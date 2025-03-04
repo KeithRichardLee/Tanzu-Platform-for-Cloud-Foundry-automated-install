@@ -42,7 +42,7 @@ Networking
 - NTP service
 
 Workstation/jump-host
-- [Powershell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows) installed
+- [Powershell 7](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows) or later installed
 - [VMware PowerCLI](https://techdocs.broadcom.com/us/en/vmware-cis/vcf/power-cli/latest/powercli/installing-vmware-vsphere-powercli/install-powercli.html) installed eg `Install-Module VMware.PowerCLI -Scope CurrentUser`
 - This repo cloned eg `git clone https://github.com/KeithRichardLee/Tanzu-Platform-for-Cloud-Foundry-automated-install.git`
 
