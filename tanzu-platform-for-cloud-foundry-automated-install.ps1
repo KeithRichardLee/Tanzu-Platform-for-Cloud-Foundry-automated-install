@@ -54,7 +54,7 @@ $BOSHvCenterEpemeralDatastores = $VMDatastore
 $BOSHvCenterVMFolder = "tpcf_vms"
 $BOSHvCenterTemplateFolder = "tpcf_templates"
 $BOSHvCenterDiskFolder = "tpcf_disk"
-$BOSHNetworkReservedRange = "FILL-ME-IN" #reserved IPs, including the Ops Manager IP
+$BOSHNetworkReservedRange = "FILL-ME-IN" #add IPs, either individual and/or ranges you don't want BOSH to use in the subnet eg gateway, Ops Man, DNS/NTP, jumpbox eg 10.0.70.0-10.0.70.2,10.0.70.10
 
 # AZ Definitions
 $BOSHAZ = @{
