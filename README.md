@@ -132,7 +132,7 @@ $TPCFCredHubSecret = "my-super-safe-password!" # must be 20 or more characters
 $TPCFComputeInstances = "1" # default is 1. Increase if planning to run many large apps
 ```
 
-If wish to install Tanzu AI Solutions, change the flag to $true and update the other parameters where required
+If wish to install Tanzu AI Solutions, change the flag to $true and update the following parameters where required
 ```bash
 # Install Tanzu AI Solutions?
 $InstallTanzuAI = $false 
@@ -151,16 +151,17 @@ $OllamaEmbedModel = "nomic-embed-text"
 .\tanzu-platform-for-cloud-foundry-automated-install.ps1
 ```
 
-Installation can take up to 1.5 hours (or up to 2 hours if installing Tanzu AI Solutions also). Install time depends on the performance of your underlying infrastructure. 
+Installation can take up to 1.5 hours (or up to 2.5 hours if installing Tanzu AI Solutions also). Install time depends on the performance of your underlying infrastructure. 
 
 Congratulations you now have installed and configured Tanzu Platform for Cloud Foundry. Let's go see it in action!
 
 
 ## Deploy a sample app
 - Retrieve UAA admin credentials
-  - Tanzu Operations Manager > Tanzu Platform for Cloud Foundry > Credentials > UAA > Admin Credentials
+  - Tanzu Operations Manager > Small Footprint Tanzu Platform for Cloud Foundry > Credentials > UAA > Admin Credentials
 - Create an Org and a Space using either Apps Manager or cf CLI for where we can deploy a sample app
-  - [Apps Manager ](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/10-0/tpcf/console-login.html)
+  - Apps Manager
+    - See docs [here](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/10-0/tpcf/console-login.html) on how to access and use Apps Manager 
   - cf CLI
     - [Install cf CLI](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/10-0/tpcf/install-go-cli.html)
     - [Login](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/tanzu-platform-for-cloud-foundry/10-0/tpcf/getting-started.html) eg
