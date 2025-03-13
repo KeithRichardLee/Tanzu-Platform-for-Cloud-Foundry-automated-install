@@ -21,24 +21,37 @@ For a much more comprehensive automated install of Tanzu Platform for Cloud Foun
 
 ## Prepare env
 ESXi host/cluster (ESXi v7.x or v8.x) with the following spare capacity...
-- Compute
-  - approx 18 vCPU, although only uses approx 4 GHz
-- Memory
-  - approx 60 GB
-- Storage
-  - approx 300GB
+- Tanzu Platform for Cloud Foundry
+  - Compute: ~18 vCPU, although only uses approx 4 GHz
+  - Memory: ~60 GB
+  - Storage: ~300GB
+- Tanzu Platform for Cloud Foundry & Tanzu AI Solutions
+  - Compute: ~40 vCPU, although only uses approx 5 GHz
+  - Memory: ~90 GB
+  - Storage: ~400GB
 
 Networking
 - IP addresses
-  - A subnet with approximately 10 free IP addresses
-    - 1x Ops Man
-    - 1x BOSH Director
-    - 5x TPCF (gorouter, blobstore, compute, control, database)
-    - x various errands, compilations, workers
-- DNS service
-  - Tanzu Operations Manager eg opsman.tanzu.lab
-  - TPCF system wildcard eg *.sys.tpcf.tanzu.lab which will resolve to the gorouter IP
-  - TPCF apps wildcard eg *.apps.tpcf.tanzu.lab which will resolve to the gorouter IP
+  - Tanzu Platform for Cloud Foundry
+    - A subnet with approximately 10 free IP addresses
+      - 1x Ops Man
+      - 1x BOSH Director
+      - 5x TPCF (gorouter, blobstore, compute, control, database)
+      - x various errands, compilations, workers
+  - Tanzu Platform for Cloud Foundry & Tanzu AI Solutions
+    - A subnet with approximately 20 free IP addresses (and has internet access so can download models from ollama. Airgapped is supported but not covered in this guide. Please see [here](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform-services/genai-on-tanzu-platform-for-cloud-foundry/10-0/ai-cf/tutorials-offline-model-support.html) for offline model support)
+      - 1x Ops Man
+      - 1x BOSH Director
+      - 5x TPCF (gorouter, blobstore, compute, control, database)
+      - 3x Postgres (broker, instances)
+      - 4x GeAI (controller, workers)
+      - x various errands, compilations, workers
+  
+- DNS
+  - 3 records created
+    - 1x Tanzu Operations Manager eg opsman.tanzu.lab
+    - 1x TPCF system wildcard eg *.sys.tpcf.tanzu.lab which will resolve to the gorouter IP
+    - 1x TPCF apps wildcard eg *.apps.tpcf.tanzu.lab which will resolve to the gorouter IP
 - NTP service
 
 Workstation/jump-host
@@ -107,7 +120,7 @@ Update BOSH Director config
 $BOSHvCenterVMFolder = "tpcf_vms"
 $BOSHvCenterTemplateFolder = "tpcf_templates"
 $BOSHvCenterDiskFolder = "tpcf_disk"
-$BOSHNetworkReservedRange = "10.0.70.0-10.0.70.5,10.0.70.10" #reserved IPs, including the Ops Manager IP
+$BOSHNetworkReservedRange = "10.0.70.0-10.0.70.5,10.0.70.10" # add IPs, either individual and/or ranges you don't want BOSH to use in the subnet eg gateway, Ops Man, DNS/NTP, jumpbox eg 10.0.70.0-10.0.70.2,10.0.70.10
 ```
 
 Update Tanzu Platform for Cloud Foundry config
@@ -116,6 +129,7 @@ Update Tanzu Platform for Cloud Foundry config
 $TPCFGoRouter = "10.0.70.100"
 $TPCFDomain = "tpcf.tanzu.lab" # sys and apps subdomain will be added to this
 $TPCFCredHubSecret = "my-super-safe-password!" # must be 20 or more characters
+$TPCFComputeInstances = "1" # default is 1. Increase if planning to run many large apps
 ```
 
 If wish to install Tanzu AI Solutions, change the flag to $true and update the other parameters where required
@@ -129,6 +143,7 @@ $GenAITile    = "C:\Users\Administrator\Downloads\TPCF\genai-10.0.2.pivotal"    
 
 # Tanzu AI Solutions config 
 $OllamaChatModel = "gemma2:2b"
+$OllamaEmbedModel = "nomic-embed-text"
 ```
 
 ## Run the script
@@ -136,7 +151,7 @@ $OllamaChatModel = "gemma2:2b"
 .\tanzu-platform-for-cloud-foundry-automated-install.ps1
 ```
 
-Installation can take up to 1.5 hours (or up to 3 hours if installing Tanzu AI Solutions also). Install time depends on the performance of your underlying infrastructure. 
+Installation can take up to 1.5 hours (or up to 2 hours if installing Tanzu AI Solutions also). Install time depends on the performance of your underlying infrastructure. 
 
 Congratulations you now have installed and configured Tanzu Platform for Cloud Foundry. Let's go see it in action!
 
