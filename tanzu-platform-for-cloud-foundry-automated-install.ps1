@@ -82,9 +82,9 @@ $BOSHNetworkAssignment = "tpcf-network"
 
 
 # TPCF configuration
-$TPCFGoRouter = "10.0.70.100"
-$TPCFDomain = "tpcf.keithlee.lab" # sys and apps subdomain will be added to this
-$TPCFCredHubSecret = "VMware1!VMware1!VMware1!" # must be 20 or more characters
+$TPCFGoRouter = "FILL-ME-IN"
+$TPCFDomain = "FILL-ME-IN" # sys and apps subdomain will be added to this
+$TPCFCredHubSecret = "FILL-ME-IN" # must be 20 or more characters
 $TPCFAZ = $BOSHAZAssignment
 $TPCFNetwork = $BOSHNetworkAssignment
 $TPCFComputeInstances = "1" # default is 1. Increase if planning to run many large apps
