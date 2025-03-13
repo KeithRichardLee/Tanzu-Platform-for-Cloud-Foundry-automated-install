@@ -82,11 +82,12 @@ $BOSHNetworkAssignment = "tpcf-network"
 
 
 # TPCF configuration
-$TPCFGoRouter = "FILL-ME-IN"
-$TPCFDomain = "FILL-ME-IN" # sys and apps subdomain will be added to this
-$TPCFCredHubSecret = "FILL-ME-IN" # must be 20 or more characters
-$TPCFAZ = $BOSHAZ.Keys
-$TPCFNetwork = $BOSHNetwork.Keys
+$TPCFGoRouter = "10.0.70.100"
+$TPCFDomain = "tpcf.keithlee.lab" # sys and apps subdomain will be added to this
+$TPCFCredHubSecret = "VMware1!VMware1!VMware1!" # must be 20 or more characters
+$TPCFAZ = $BOSHAZAssignment
+$TPCFNetwork = $BOSHNetworkAssignment
+$TPCFComputeInstances = "1" # default is 1. Increase if planning to run many large apps
 
 # Install Tanzu AI Solutions?
 $InstallTanzuAI = $false 
@@ -97,6 +98,7 @@ $GenAITile    = "C:\Users\Administrator\Downloads\TPCF\genai-10.0.2.pivotal"    
 
 # Tanzu AI Solutions config 
 $OllamaChatModel = "gemma2:2b"
+$OllamaEmbedModel = "nomic-embed-text"
 
 
 #### DO NOT EDIT BEYOND HERE ####
@@ -153,7 +155,7 @@ if($confirmDeployment -eq 1) {
     Write-Host -ForegroundColor Yellow "---- VMware Tanzu for Cloud Foundry required files ---- "
     Write-Host -NoNewline -ForegroundColor Green "Tanzu Ops Manager OVA path: "
     Write-Host -ForegroundColor White $OpsManOVA
-    Write-Host -NoNewline -ForegroundColor Green "TPCF Tile path: "
+    Write-Host -NoNewline -ForegroundColor Green "TPCF tile path: "
     Write-Host -ForegroundColor White $TPCFTile
     Write-Host -NoNewline -ForegroundColor Green "OM CLI path: "
     Write-Host -ForegroundColor White $OMCLI
@@ -183,28 +185,28 @@ if($confirmDeployment -eq 1) {
     Write-Host -NoNewline -ForegroundColor Green "AZ Resource Pool: "
     Write-Host -ForegroundColor White $($BOSHAZ[$BOSHAZAssignment].resource_pool)
     
-    Write-Host -ForegroundColor Green "`nNetwork Config"
+	Write-Host -ForegroundColor Green "`nNetwork Config"
     Write-Host -NoNewline -ForegroundColor Green "Network name: "
     Write-Host -ForegroundColor White $BOSHNetwork.Keys
     Write-Host -NoNewline -ForegroundColor Green "Network Portgroup: "
     Write-Host -ForegroundColor White $($BOSHNetwork[$BOSHNetworkAssignment].portgroupname)	
-    Write-Host -NoNewline -ForegroundColor Green "Network CIDR: "
+	Write-Host -NoNewline -ForegroundColor Green "Network CIDR: "
     Write-Host -ForegroundColor White $($BOSHNetwork[$BOSHNetworkAssignment].cidr)
-    Write-Host -NoNewline -ForegroundColor Green "Network Gateway: "
+	Write-Host -NoNewline -ForegroundColor Green "Network Gateway: "
     Write-Host -ForegroundColor White $($BOSHNetwork[$BOSHNetworkAssignment].gateway)
-    Write-Host -NoNewline -ForegroundColor Green "Network DNS: "
+	Write-Host -NoNewline -ForegroundColor Green "Network DNS: "
     Write-Host -ForegroundColor White $($BOSHNetwork[$BOSHNetworkAssignment].dns)
-    Write-Host -NoNewline -ForegroundColor Green "Reserved IP range: "
+	Write-Host -NoNewline -ForegroundColor Green "Reserved IP range: "
     Write-Host -ForegroundColor White $($BOSHNetwork[$BOSHNetworkAssignment].reserved_range)
 
     Write-Host -NoNewline -ForegroundColor Green "`nNTP: "
     Write-Host -ForegroundColor White $VMNTP
     Write-Host -NoNewline -ForegroundColor Green "Enable human readable names: "
-    Write-Host -ForegroundColor White "True"
-    Write-Host -NoNewline -ForegroundColor Green "ICMP checks enabled: "
-    Write-Host -ForegroundColor White "True"
-    Write-Host -NoNewline -ForegroundColor Green "Include Tanzu Ops Manager Root CA in Trusted Certs: "
-    Write-Host -ForegroundColor White "True"
+	Write-Host -ForegroundColor White "True"
+	Write-Host -NoNewline -ForegroundColor Green "ICMP checks enabled: "
+	Write-Host -ForegroundColor White "True"
+	Write-Host -NoNewline -ForegroundColor Green "Include Tanzu Ops Manager Root CA in Trusted Certs: "
+	Write-Host -ForegroundColor White "True"
 
     Write-Host -ForegroundColor Yellow "`n---- TPCF Configuration ----"
     Write-Host -NoNewline -ForegroundColor Green "AZ: "
@@ -219,7 +221,7 @@ if($confirmDeployment -eq 1) {
     Write-Host -ForegroundColor White $TPCFGoRouter
     Write-Host -NoNewline -ForegroundColor Green "GoRouter wildcard cert SAN: "
     $domainlist = "*.apps.$TPCFDomain,*.login.sys.$TPCFDomain,*.uaa.sys.$TPCFDomain,*.sys.$TPCFDomain,*.$TPCFDomain"    
-    Write-Host -ForegroundColor White $domainlist
+	Write-Host -ForegroundColor White $domainlist
 
     Write-Host -NoNewline -ForegroundColor Green "`nInstall Tanzu AI Solutions: "
     if($InstallTanzuAI -eq 1) {
@@ -256,11 +258,11 @@ if($deployOpsManager -eq 1) {
     $cluster = Get-Cluster -Server $viConnection -Name $VMCluster
     $datacenter = $cluster | Get-Datacenter
     $vmhost = $cluster | Get-VMHost | Select -First 1
-    $resourcepool = Get-ResourcePool -Server $viConnection -Name $VMResourcePool
+	$resourcepool = Get-ResourcePool -Server $viConnection -Name $VMResourcePool
 	
-    # future work, change below to use "om vm-lifecycle create-vm"
+	# future work, change below to use "om vm-lifecycle create-vm"
 	
-    # Deploy Ops Manager
+	# Deploy Ops Manager
     $opsMgrOvfCOnfig = Get-OvfConfiguration $OpsManOVA
     $opsMgrOvfCOnfig.Common.ip0.Value = $OpsManagerIPAddress
     $opsMgrOvfCOnfig.Common.netmask0.Value = $OpsManagerNetmask
@@ -281,21 +283,21 @@ if($deployOpsManager -eq 1) {
 
 if($setupOpsManager -eq 1) {
     My-Logger "Waiting for Tanzu Ops Manager to come online ..."
-    while (1) {
-      try {
-          $results = Invoke-WebRequest -Uri https://$OpsManagerHostname -SkipCertificateCheck -Method GET
-          if ($results.StatusCode -eq 200) {
-              break
-          }
-      } catch {
-          My-Logger "Tanzu Ops Manager is not ready yet, sleeping 30 seconds ..."
-          Start-Sleep 30
-      }
-    }	
+	while (1) {
+		try {
+			$results = Invoke-WebRequest -Uri https://$OpsManagerHostname -SkipCertificateCheck -Method GET
+			if ($results.StatusCode -eq 200) {
+				break
+			}
+		} catch {
+			My-Logger "Tanzu Ops Manager is not ready yet, sleeping 30 seconds ..."
+			Start-Sleep 30
+		}
+	}	
 	
-    My-Logger "Setting up Tanzu Ops Manager authentication ..."
+	My-Logger "Setting up Tanzu Ops Manager authentication ..."
       
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-authentication --username $OpsManagerAdminUsername --password $OpsManagerAdminPassword --decryption-passphrase $OpsManagerDecryptionPassword"
+	$configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-authentication --username $OpsManagerAdminUsername --password $OpsManagerAdminPassword --decryption-passphrase $OpsManagerDecryptionPassword"
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
 }
@@ -312,12 +314,12 @@ az-configuration:
 "@
     # Process AZ
     $singleAZString = ""
-    $BOSHAZ.GetEnumerator() | Sort-Object -Property Value | Foreach-Object {
-        $singleAZString += "- name: "+$_.Name+"`n"
-        $singleAZString += "  iaas_configuration_name: "+$_.Value['iaas_name']+"`n"
-        $singleAZString += "  clusters:`n"
-        $singleAZString += "  - cluster: "+$_.Value['cluster']+"`n"
-        $singleAZString += "    resource_pool: "+$_.Value['resource_pool']+"`n"
+	$BOSHAZ.GetEnumerator() | Sort-Object -Property Value | Foreach-Object {
+		$singleAZString += "- name: "+$_.Name+"`n"
+		$singleAZString += "  iaas_configuration_name: "+$_.Value['iaas_name']+"`n"
+		$singleAZString += "  clusters:`n"
+		$singleAZString += "  - cluster: "+$_.Value['cluster']+"`n"
+		$singleAZString += "    resource_pool: "+$_.Value['resource_pool']+"`n"
     }
 
     # Process Networks
@@ -333,9 +335,10 @@ networks-configuration:
         $singleNetworkString += "    subnets:`n"
         $singleNetworkString += "    - iaas_identifier: "+$_.Value['portgroupname']+"`n"
         $singleNetworkString += "      cidr: "+$_.Value['cidr']+"`n"
-        $singleNetworkString += "      reserved_ip_ranges: "+$_.Value['reserved_range']+"`n"
-        $singleNetworkString += "      dns: "+$_.Value['dns']+"`n"
         $singleNetworkString += "      gateway: "+$_.Value['gateway']+"`n"
+        $singleNetworkString += "      dns: "+$_.Value['dns']+"`n"
+        $singleNetworkString += "      cidr: "+$_.Value['cidr']+"`n"
+        $singleNetworkString += "      reserved_ip_ranges: "+$_.Value['reserved_range']+"`n"
         $singleNetworkString += "      availability_zone_names:`n"
         $singleNetworkString += "      - "+$_.Value['az']+"`n"
     }
@@ -394,12 +397,12 @@ properties-configuration:
 
 if($setupTPCF -eq 1) {
     
-    # Get product name and version
-    $TPCFProductName = & "$OMCLI" product-metadata --product-path $TPCFTile --product-name
-    $TPCFVersion = & "$OMCLI" product-metadata --product-path $TPCFTile --product-version
+	# Get product name and version
+	$TPCFProductName = & "$OMCLI" product-metadata --product-path $TPCFTile --product-name
+	$TPCFVersion = & "$OMCLI" product-metadata --product-path $TPCFTile --product-version
 
-    # Upload tile
-    My-Logger "Uploading TPCF Tile to Tanzu Ops Manager (can take up to 15 mins) ..."
+	# Upload tile
+	My-Logger "Uploading TPCF Tile to Tanzu Ops Manager (can take up to 15 mins) ..."
     $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword upload-product --product $TPCFTile"
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
@@ -411,17 +414,17 @@ if($setupTPCF -eq 1) {
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
 	
 	
-    # Generate wildcard cert and key
+	# Generate wildcard cert and key
     $domainlist = "*.apps.$TPCFDomain,*.login.sys.$TPCFDomain,*.uaa.sys.$TPCFDomain,*.sys.$TPCFDomain,*.$TPCFDomain"
-    $TPCFcert_and_key = & "$OMCLI" -k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword generate-certificate -d $domainlist
+	$TPCFcert_and_key = & "$OMCLI" -k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword generate-certificate -d $domainlist
 	
-    $pattern = "-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----\\n"
+	$pattern = "-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----\\n"
     $TPCFcert = [regex]::Match($TPCFcert_and_key, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
 	
-    $pattern = "-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----\\n"
+	$pattern = "-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----\\n"
     $TPCFkey = [regex]::Match($TPCFcert_and_key, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
     
-    # Create TPCF config yaml
+	# Create TPCF config yaml
     $TPCFPayload = @"
 ---
 product-name: cf
@@ -464,33 +467,36 @@ resource-config:
     instances: 0
   mysql_monitor:
     instances: 0
+  compute:
+    instances: $TPCFComputeInstances
 "@	
 
     $TPCFyaml = "tpcf-config.yaml"
     $TPCFPayload > $TPCFyaml	
 	
-    My-Logger "Applying TPCF configuration ..."
+	My-Logger "Applying TPCF configuration ..."
     $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-product --config $TPCFyaml"
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
 
     # To improve install time, don't install TPCF just yet if postgres and GenAI tiles are to be installed also
-    if($InstallTanzuAI -eq 0) {
+	if($InstallTanzuAI -eq 0) {
         My-Logger "Installing TPCF (can take up to 60 minutes) ..."
         $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes"
         if($debug) { My-Logger "${OMCLI} $installArgs"}
         $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
     } 
+
 }
 
 if($setupPostgres -eq 1) {
 
-    # Get product name and version
-    $PostgresProductName = & "$OMCLI" product-metadata --product-path $PostgresTile --product-name
-    $PostgresVersion = & "$OMCLI" product-metadata --product-path $PostgresTile --product-version
+	# Get product name and version
+	$PostgresProductName = & "$OMCLI" product-metadata --product-path $PostgresTile --product-name
+	$PostgresVersion = & "$OMCLI" product-metadata --product-path $PostgresTile --product-version
 
-    # Upload tile
-    My-Logger "Uploading Postgres Tile to Tanzu Ops Manager ..."
+	# Upload tile
+	My-Logger "Uploading Postgres Tile to Tanzu Ops Manager ..."
     $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword upload-product --product $PostgresTile"
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
@@ -501,7 +507,7 @@ if($setupPostgres -eq 1) {
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile	
 	
-    # Create Postgres config yaml
+	# Create Postgres config yaml
     $PostgresPayload = @"
 ---
 product-name: postgres
@@ -527,12 +533,12 @@ network-properties:
     $Postgresyaml = "postgres-config.yaml"
     $PostgresPayload > $Postgresyaml	
 	
-    My-Logger "Applying Postgres configuration ..."
+	My-Logger "Applying Postgres configuration ..."
     $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-product --config $Postgresyaml"
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
 
-    My-Logger "Installing TPCF and Postgres (can take up to 60 mins) ..."
+    My-Logger "Installing TPCF and Postgres (can take up to 75 minutes) ..."
     $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes"
     if($debug) { My-Logger "${OMCLI} $installArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
@@ -540,12 +546,12 @@ network-properties:
 
 if($setupGenAI -eq 1) {
 
-    # Get product name and version
-    $GenAIProductName = & "$OMCLI" product-metadata --product-path $GenAITile --product-name
-    $GenAIVersion = & "$OMCLI" product-metadata --product-path $genAITile --product-version
+	# Get product name and version
+	$GenAIProductName = & "$OMCLI" product-metadata --product-path $GenAITile --product-name
+	$GenAIVersion = & "$OMCLI" product-metadata --product-path $genAITile --product-version
 
-    # Upload tile
-    My-Logger "Uploading GenAI Tile to Tanzu Ops Manager ..."
+	# Upload tile
+	My-Logger "Uploading GenAI Tile to Tanzu Ops Manager ..."
     $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword upload-product --product $GenAITile"
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
@@ -556,7 +562,7 @@ if($setupGenAI -eq 1) {
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile	
 	
-    # Create GenAI config yaml
+	# Create GenAI config yaml
     $GenAIPayload = @"
 ---
 product-name: genai
@@ -573,7 +579,7 @@ product-properties:
       - $BOSHAZAssignment
       model_capabilities:
       - embedding
-      model_name: nomic-embed-text
+      model_name: $OllamaEmbedModel
       vm_type: cpu
   .properties.database_source.service_broker.name:
     value: postgres
@@ -594,17 +600,15 @@ network-properties:
     $GenAIyaml = "genai-config.yaml"
     $GenAIPayload > $GenAIyaml	
 	
-    My-Logger "Applying GenAI configuration ..."
+	My-Logger "Applying GenAI configuration ..."
     $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-product --config $GenAIyaml"
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
 
-    My-Logger "Installing GenAI (can take up to 60 mins)..."
-    $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes"
+    My-Logger "Installing GenAI (can take up to 40 minutes) ..."
+    $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes --product-name $GenAIProductName"
     if($debug) { My-Logger "${OMCLI} $installArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
-
-    # to do; turn off errands already ran so install time is reduced
 
 }
 
