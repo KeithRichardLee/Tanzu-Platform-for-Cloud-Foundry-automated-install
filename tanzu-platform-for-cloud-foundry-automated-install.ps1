@@ -251,7 +251,7 @@ if($confirmDeployment -eq 1) {
     }
 
     Write-Host -NoNewline -ForegroundColor Green "`nInstall Tanzu Kubernetes Grid integrated edition: "
-    if($InstallTanzuAI -eq 1) {
+    if($InstallTKGI -eq 1) {
         Write-Host -ForegroundColor White "Yes"
     } else {
         Write-Host -ForegroundColor White "No"
