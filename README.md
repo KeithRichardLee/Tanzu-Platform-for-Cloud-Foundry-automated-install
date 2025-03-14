@@ -24,11 +24,11 @@ ESXi host/cluster (ESXi v7.x or v8.x) with the following spare capacity...
 - Tanzu Platform for Cloud Foundry
   - Compute: ~18 vCPU, although only uses approx 4 GHz
   - Memory: ~60 GB
-  - Storage: ~300GB
+  - Storage: ~300 GB
 - Tanzu Platform for Cloud Foundry & Tanzu AI Solutions
   - Compute: ~40 vCPU, although only uses approx 5 GHz
   - Memory: ~90 GB
-  - Storage: ~400GB
+  - Storage: ~400 GB
 
 Networking
 - IP addresses
