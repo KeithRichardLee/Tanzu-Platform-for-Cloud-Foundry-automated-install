@@ -160,6 +160,21 @@ if($preCheck -eq 1) {
         Write-Host -ForegroundColor Red "`nUnable to find $TPCFTile ...`nexiting"
         exit
     }
+
+    if(!(Test-Path $PostgresTile) -and $InstallTanzuAI -eq $true) {
+        Write-Host -ForegroundColor Red "`nUnable to find $PostgresTile ...`nexiting"
+        exit
+    }
+
+    if(!(Test-Path $GenAITile) -and $InstallTanzuAI -eq $true) {
+        Write-Host -ForegroundColor Red "`nUnable to find $GenAITile ...`nexiting"
+        exit
+    }
+
+    if(!(Test-Path $TKGITile) -and $InstallTKGI -eq $true) {
+        Write-Host -ForegroundColor Red "`nUnable to find $TKGITile ...`nexiting"
+        exit
+    }
 }
 
 if($confirmDeployment -eq 1) {
@@ -246,6 +261,8 @@ if($confirmDeployment -eq 1) {
         Write-Host -ForegroundColor White $GenAITile
         Write-Host -NoNewline -ForegroundColor Green "Ollama Chat Model: "
         Write-Host -ForegroundColor White $OllamaChatModel
+        Write-Host -NoNewline -ForegroundColor Green "Ollama embedding model: "
+        Write-Host -ForegroundColor White $OllamaEmbedModel
     } else {
         Write-Host -ForegroundColor White "No"
     }
@@ -253,6 +270,11 @@ if($confirmDeployment -eq 1) {
     Write-Host -NoNewline -ForegroundColor Green "`nInstall Tanzu Kubernetes Grid integrated edition: "
     if($InstallTKGI -eq 1) {
         Write-Host -ForegroundColor White "Yes"
+        Write-Host -ForegroundColor Yellow "`n---- TKGi Configuration ----"
+        Write-Host -NoNewline -ForegroundColor Green "TKGi tile path: "
+        Write-Host -ForegroundColor White $TKGITile
+        Write-Host -NoNewline -ForegroundColor Green "TKGi domain: "
+        Write-Host -ForegroundColor White $TKGIDomain
     } else {
         Write-Host -ForegroundColor White "No"
     }
@@ -266,7 +288,7 @@ if($confirmDeployment -eq 1) {
 }
 
 if($deployOpsManager -eq 1) {
-    My-Logger "Connecting to vCenter Server $VIServer ..."
+    My-Logger "Connecting to vCenter Server: $VIServer ..."
     $viConnection = Connect-VIServer $VIServer -User $VIUsername -Password $VIPassword -WarningAction SilentlyContinue
 
     $datastore = Get-Datastore -Server $viConnection -Name $VMDatastore | Select -First 1
@@ -711,7 +733,7 @@ network-properties:
 errand-config:
   smoke-tests:
     post-deploy-state: true
-"@	
+"@
 
     $TKGIyaml = "tkgi-config.yaml"
     $TKGIPayload > $TKGIyaml	
@@ -721,7 +743,7 @@ errand-config:
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
 
-    My-Logger "Installing TKGi ..."
+    My-Logger "Installing TKGi (can take up to 40 minutes) ..."
     $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes --product-name $TKGIProductName"
     if($debug) { My-Logger "${OMCLI} $installArgs"}
     $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
