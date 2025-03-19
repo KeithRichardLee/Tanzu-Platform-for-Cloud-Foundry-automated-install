@@ -4,7 +4,7 @@ A powershell script that automates the install of Tanzu Platform for Cloud Found
 
 For a much more comprehensive automated install of Tanzu Platform for Cloud Foundry, which uses [Concourse](https://concourse-ci.org/), check out the [Platform Automation Toolkit for Tanzu](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/platform-automation-toolkit-for-tanzu/5-2/vmware-automation-toolkit/docs-index.html)
 
-**Update**: The script now has an option to install Tanzu AI Solutions after Tanzu Platform for Cloud Foundry
+**Update**: The script now has an option to install Tanzu AI Solutions and/or Tanzu Kubernetes Grid integrated edtion (TKGi) after Tanzu Platform for Cloud Foundry
 
 ## High-level flow
 - Prepare env
@@ -18,6 +18,7 @@ For a much more comprehensive automated install of Tanzu Platform for Cloud Foun
     - If enabled, will install Tanzu AI Solutions...
       - Deploy VMware Postgres
       - Deploy GenAI for Tanzu Platform
+    - If enabled, will install Tanzu Kubernetes Grid integrated edtion (TKGi)
 
 ## Prepare env
 ESXi host/cluster (ESXi v7.x or v8.x) with the following spare capacity...
@@ -25,10 +26,14 @@ ESXi host/cluster (ESXi v7.x or v8.x) with the following spare capacity...
   - Compute: ~18 vCPU, although only uses approx 4 GHz
   - Memory: ~60 GB
   - Storage: ~300 GB
-- Tanzu Platform for Cloud Foundry & Tanzu AI Solutions
-  - Compute: ~40 vCPU, although only uses approx 5 GHz
-  - Memory: ~90 GB
-  - Storage: ~400 GB
+- Tanzu AI Solutions additional requirements
+  - Compute: ~20 vCPU, although only uses approx 1 GHz
+  - Memory: ~30 GB
+  - Storage: ~100 GB
+- Tanzu Kubernetes Grid integrated edition additional requirements (includes a single small cluster)
+  - Compute: ~12 vCPU, although only uses approx 1 GHz
+  - Memory: ~30 GB
+  - Storage: ~100 GB
 
 Networking
 - IP addresses
@@ -38,20 +43,27 @@ Networking
       - 1x BOSH Director
       - 5x TPCF (gorouter, blobstore, compute, control, database)
       - x various errands, compilations, workers
-  - Tanzu Platform for Cloud Foundry & Tanzu AI Solutions
-    - A subnet with approximately 20 free IP addresses (and has internet access so can download models from ollama. Airgapped is supported but not covered in this guide. Please see [here](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform-services/genai-on-tanzu-platform-for-cloud-foundry/10-0/ai-cf/tutorials-offline-model-support.html) for offline model support)
-      - 1x Ops Man
-      - 1x BOSH Director
-      - 5x TPCF (gorouter, blobstore, compute, control, database)
+  - Tanzu AI Solutions additional requirements
+    - Additional 10 free IP addresses (and has internet access so can download models from ollama. Airgapped is supported but not covered in this guide. Please see [here](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform-services/genai-on-tanzu-platform-for-cloud-foundry/10-0/ai-cf/tutorials-offline-model-support.html) for offline model support)
       - 3x Postgres (broker, instances)
-      - 4x GeAI (controller, workers)
+      - 4x GenAI (controller, workers)
+      - x various errands, compilations, workers
+  - Tanzu Kubernetes Grid integrated edition additional requirements
+    - Additional 10 free IP addresses
+      - 2x TKGi (API, DB)
+      - 4x kubernetes cluster
       - x various errands, compilations, workers
   
 - DNS
-  - 3 records created
-    - 1x Tanzu Operations Manager eg opsman.tanzu.lab
-    - 1x TPCF system wildcard eg *.sys.tpcf.tanzu.lab which will resolve to the gorouter IP
-    - 1x TPCF apps wildcard eg *.apps.tpcf.tanzu.lab which will resolve to the gorouter IP
+  - Tanzu Platform for Cloud Foundry
+    - 3 records created
+      - 1x Tanzu Operations Manager eg opsman.tanzu.lab
+      - 1x TPCF system wildcard eg *.sys.tpcf.tanzu.lab which will resolve to the gorouter IP
+      - 1x TPCF apps wildcard eg *.apps.tpcf.tanzu.lab which will resolve to the gorouter IP
+  - Tanzu Kubernetes Grid integrated edition
+      - 1x TKGi API eg api.tkgi.tanzu.lab
+      - 1x TKGi kubernetes cluster eg cluster-01.tkgi.tanzu.lab
+ 
 - NTP service
 
 Workstation/jump-host
@@ -70,6 +82,8 @@ Workstation/jump-host
   - https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware+Tanzu+for+Postgres+on+Cloud+Foundry
 - GenAI for Tanzu Platform (if installing Tanzu AI Solutions)
   - https://support.broadcom.com/group/ecx/productdownloads?subfamily=GenAI%20on%20Tanzu%20Platform%20for%20Cloud%20Foundry
+- Tanzu Kubernetes Grid integrated edition (if installing TKGi)
+  - https://support.broadcom.com/group/ecx/productdownloads?subfamily=Tanzu%20Kubernetes%20Grid%20Integrated%20Edition%20(TKGi)%20-%20CLI%20%26%20Tile 
 
 ## Fill out required data in the script
 Update each instance of "FILL-ME-IN" in the script. See below for a worked example...
@@ -146,12 +160,24 @@ $OllamaChatModel = "gemma2:2b"
 $OllamaEmbedModel = "nomic-embed-text"
 ```
 
+If wish to install Tanzu Kubernetes Grid integrated edition, change the flag to $true and update the following parameters where required
+```bash
+# Install Tanzu Kubernetes Grid integrated edition (TKGi)?
+$InstallTKGI = $false
+
+# Full Path to TKGi tile
+$TKGITile = "C:\Users\Administrator\Downloads\TPCF\pivotal-container-service-1.21.0-build.32.pivotal"   #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=Tanzu%20Kubernetes%20Grid%20Integrated%20Edition%20(TKGi)%20-%20CLI%20%26%20Tile 
+
+# TKGi config
+$TKGIDomain = "FILL-ME-IN" # TKGi and TKGi API domain eg tkgi.tanzu.lab
+```
+
 ## Run the script
 ```bash
 .\tanzu-platform-for-cloud-foundry-automated-install.ps1
 ```
 
-Installation can take up to 1.5 hours (or up to 2.5 hours if installing Tanzu AI Solutions also). Install time depends on the performance of your underlying infrastructure. 
+Installation can take up to 1.5 hours (allow an additional 60 mins for Tanzu AI Solutions, and an additional 40 mins for TKGi). Install time depends on the performance of your underlying infrastructure. 
 
 Congratulations you now have installed and configured Tanzu Platform for Cloud Foundry. Let's go see it in action!
 
@@ -187,3 +213,6 @@ Congratulations you now have installed and configured Tanzu Platform for Cloud F
 
 ## Tanzu AI Solutions
 If you opted to install Tanzu AI Solutions, check out these guides [here](https://github.com/KeithRichardLee/VMware-Tanzu-Guides) to learn more about it and deploy sample apps
+
+## Tanzu Kubernetes Grid integrated edition
+If you opted to install TKGi, check out the [offical docs](https://techdocs.broadcom.com/us/en/vmware-tanzu/standalone-components/tanzu-kubernetes-grid-integrated-edition/1-21/tkgi/create-cluster.html) on how to deploy your first cluster
