@@ -301,9 +301,9 @@ if($deployOpsManager -eq 1) {
     $datacenter = $cluster | Get-Datacenter
     $vmhost = $cluster | Get-VMHost | Select -First 1
     $resourcepool = Get-ResourcePool -Server $viConnection -Name $VMResourcePool
-	
+
     # future work, change below to use "om vm-lifecycle create-vm"
-	
+
     # Deploy Ops Manager
     $opsMgrOvfCOnfig = Get-OvfConfiguration $OpsManOVA
     $opsMgrOvfCOnfig.Common.ip0.Value = $OpsManagerIPAddress
@@ -325,23 +325,27 @@ if($deployOpsManager -eq 1) {
 
 if($setupOpsManager -eq 1) {
     My-Logger "Waiting for Tanzu Ops Manager to come online ..."
-	while (1) {
-		try {
-			$results = Invoke-WebRequest -Uri https://$OpsManagerHostname -SkipCertificateCheck -Method GET
-			if ($results.StatusCode -eq 200) {
-				break
-			}
-		} catch {
-			My-Logger "Tanzu Ops Manager is not ready yet, sleeping 30 seconds ..."
-			Start-Sleep 30
-		}
-	}	
-	
+    while (1) {
+        try {
+            $results = Invoke-WebRequest -Uri https://$OpsManagerHostname -SkipCertificateCheck -Method GET
+            if ($results.StatusCode -eq 200) {
+                break
+            }
+        } catch {
+            My-Logger "Tanzu Ops Manager is not ready yet, sleeping 30 seconds ..."
+            Start-Sleep 30
+        }
+    }
+
     My-Logger "Setting up Tanzu Ops Manager authentication ..."
-      
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-authentication --username $OpsManagerAdminUsername --password $OpsManagerAdminPassword --decryption-passphrase $OpsManagerDecryptionPassword"
+
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "configure-authentication", "--username", "$OpsManagerAdminUsername", "--password", "$OpsManagerAdminPassword", "--decryption-passphrase", "$OpsManagerDecryptionPassword")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
 }
 
 
@@ -356,12 +360,12 @@ az-configuration:
 "@
     # Process AZ
     $singleAZString = ""
-	$BOSHAZ.GetEnumerator() | Sort-Object -Property Value | Foreach-Object {
-		$singleAZString += "- name: "+$_.Name+"`n"
-		$singleAZString += "  iaas_configuration_name: "+$_.Value['iaas_name']+"`n"
-		$singleAZString += "  clusters:`n"
-		$singleAZString += "  - cluster: "+$_.Value['cluster']+"`n"
-		$singleAZString += "    resource_pool: "+$_.Value['resource_pool']+"`n"
+    $BOSHAZ.GetEnumerator() | Sort-Object -Property Value | Foreach-Object {
+        $singleAZString += "- name: "+$_.Name+"`n"
+        $singleAZString += "  iaas_configuration_name: "+$_.Value['iaas_name']+"`n"
+        $singleAZString += "  clusters:`n"
+        $singleAZString += "  - cluster: "+$_.Value['cluster']+"`n"
+        $singleAZString += "    resource_pool: "+$_.Value['resource_pool']+"`n"
     }
 
     # Process Networks
@@ -426,15 +430,23 @@ properties-configuration:
     $boshPayload > $boshYaml
 
     My-Logger "Applying BOSH Director configuration ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-director --config $boshYaml"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "configure-director", "--config", "$boshYaml")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
 
     My-Logger "Installing BOSH Director (can take up to 15 minutes) ..."
-    $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes"
+    $installArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "apply-changes")
     if($debug) { My-Logger "${OMCLI} $installArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
-	
+    & $OMCLI $installArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
+
 }
 
 
@@ -446,27 +458,34 @@ if($setupTPCF -eq 1) {
 
     # Upload tile
     My-Logger "Uploading TPCF tile to Tanzu Ops Manager (can take up to 15 mins) ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword upload-product --product $TPCFTile"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "upload-product", "--product", "$TPCFTile")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
 
     # Stage tile
     My-Logger "Adding TPCF tile to Tanzu Ops Manager ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword stage-product --product-name $TPCFProductName --product-version $TPCFVersion"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "stage-product", "--product-name", "$TPCFProductName", "--product-version", "$TPCFVersion")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
-	
-	
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
+
     # Generate wildcard cert and key
     $domainlist = "*.apps.$TPCFDomain,*.login.sys.$TPCFDomain,*.uaa.sys.$TPCFDomain,*.sys.$TPCFDomain,*.$TPCFDomain"
     $TPCFcert_and_key = & "$OMCLI" -k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword generate-certificate -d $domainlist
-	
+
     $pattern = "-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----\\n"
     $TPCFcert = [regex]::Match($TPCFcert_and_key, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
-	
+
     $pattern = "-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----\\n"
     $TPCFkey = [regex]::Match($TPCFcert_and_key, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
-    
+
     # Create TPCF config yaml
     $TPCFPayload = @"
 ---
@@ -512,44 +531,61 @@ resource-config:
     instances: 0
   compute:
     instances: $TPCFComputeInstances
-"@	
+"@
 
     $TPCFyaml = "tpcf-config.yaml"
-    $TPCFPayload > $TPCFyaml	
-	
+    $TPCFPayload > $TPCFyaml
+
     My-Logger "Applying TPCF configuration ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-product --config $TPCFyaml"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "configure-product", "--config", "$TPCFyaml")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
 
     # To improve install time, don't install TPCF just yet if postgres and GenAI tiles are to be installed also
     if($InstallTanzuAI -eq 0) {
         My-Logger "Installing TPCF (can take up to 60 minutes) ..."
-        $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes"
+        $installArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "apply-changes")
         if($debug) { My-Logger "${OMCLI} $installArgs"}
-        $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
-    } 
+        & $OMCLI $installArgs 2>&1 >> $verboseLogFile
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+            exit
+        }
+    }
 
 }
 
+
 if($setupPostgres -eq 1) {
 
-   # Get product name and version
-   $PostgresProductName = & "$OMCLI" product-metadata --product-path $PostgresTile --product-name
-   $PostgresVersion = & "$OMCLI" product-metadata --product-path $PostgresTile --product-version
+    # Get product name and version
+    $PostgresProductName = & "$OMCLI" product-metadata --product-path $PostgresTile --product-name
+    $PostgresVersion = & "$OMCLI" product-metadata --product-path $PostgresTile --product-version
 
     # Upload tile
     My-Logger "Uploading Postgres tile to Tanzu Ops Manager ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword upload-product --product $PostgresTile"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "upload-product", "--product", "$PostgresTile")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
 
     # Stage tile
     My-Logger "Adding Postgres tile to Tanzu Ops Manager ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword stage-product --product-name $PostgresProductName --product-version $PostgresVersion"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "stage-product", "--product-name", "$PostgresProductName", "--product-version", "$PostgresVersion")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile	
-	
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
+
     # Create Postgres config yaml
     $PostgresPayload = @"
 ---
@@ -570,22 +606,31 @@ network-properties:
     name: $BOSHNetworkAssignment
   singleton_availability_zone:
     name: $BOSHAZAssignment
-"@	
-
+"@
 
     $Postgresyaml = "postgres-config.yaml"
-    $PostgresPayload > $Postgresyaml	
-	
+    $PostgresPayload > $Postgresyaml
+
     My-Logger "Applying Postgres configuration ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-product --config $Postgresyaml"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "configure-product", "--config", "$Postgresyaml")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
 
     My-Logger "Installing TPCF and Postgres (can take up to 75 minutes) ..."
-    $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes"
+    $installArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "apply-changes")
     if($debug) { My-Logger "${OMCLI} $installArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
+    & $OMCLI $installArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
+
 }
+
 
 if($setupGenAI -eq 1) {
 
@@ -595,16 +640,24 @@ if($setupGenAI -eq 1) {
 
     # Upload tile
     My-Logger "Uploading GenAI tile to Tanzu Ops Manager ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword upload-product --product $GenAITile"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "upload-product", "--product", "$GenAITile")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
 
     # Stage tile
     My-Logger "Adding GenAI tile to Tanzu Ops Manager ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword stage-product --product-name $GenAIProductName --product-version $GenAIVersion"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "stage-product", "--product-name", "$GenAIProductName", "--product-version", "$GenAIVersion")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile	
-	
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
+
     # Create GenAI config yaml
     $GenAIPayload = @"
 ---
@@ -638,50 +691,65 @@ network-properties:
   singleton_availability_zone:
     name: $BOSHAZAssignment
 
-"@	
+"@
 
     $GenAIyaml = "genai-config.yaml"
-    $GenAIPayload > $GenAIyaml	
-	
+    $GenAIPayload > $GenAIyaml
+
     My-Logger "Applying GenAI configuration ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-product --config $GenAIyaml"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "configure-product", "--config", "$GenAIyaml")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
 
     My-Logger "Installing GenAI (can take up to 40 minutes) ..."
-    $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes --product-name $GenAIProductName"
+    $installArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "apply-changes", "--product-name", "$GenAIProductName")
     if($debug) { My-Logger "${OMCLI} $installArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
+    & $OMCLI $installArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
 
 }
 
 
 if($setupTKGI -eq 1) {
-	
+
     # Get product name and version
     $TKGIProductName = & "$OMCLI" product-metadata --product-path $TKGITile --product-name
     $TKGIVersion = & "$OMCLI" product-metadata --product-path $TKGITile --product-version
 
     # Upload tile 
     My-Logger "Uploading TKGi tile to Tanzu Ops Manager ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword upload-product --product $TKGITile"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "upload-product", "--product", "$TKGITile")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
-    
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
+
     # Stage tile
     My-Logger "Adding TKGi tile to Tanzu Ops Manager ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword stage-product --product-name $TKGIProductName --product-version $TKGIVersion"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "stage-product", "--product-name", "$TKGIProductName", "--product-version", "$TKGIVersion")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
-	
-	
-   # Generate wildcard cert and key
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
+
+    # Generate wildcard cert and key
     $domainlist = "*.$TKGIDomain"
     $TKGIcert_and_key = & "$OMCLI" -k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword generate-certificate -d $domainlist
-	
+
     $pattern = "-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----\\n"
     $TKGIcert = [regex]::Match($TKGIcert_and_key, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
-	
+
     $pattern = "-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----\\n"
     $TKGIkey = [regex]::Match($TKGIcert_and_key, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
     
@@ -736,24 +804,32 @@ errand-config:
 "@
 
     $TKGIyaml = "tkgi-config.yaml"
-    $TKGIPayload > $TKGIyaml	
-	
+    $TKGIPayload > $TKGIyaml
+
     My-Logger "Applying TKGi configuration ..."
-    $configArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword configure-product --config $TKGIyaml"
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "configure-product", "--config", "$TKGIyaml")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $configArgs -Wait -RedirectStandardOutput $verboseLogFile
+    & $OMCLI $configArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
 
     My-Logger "Installing TKGi (can take up to 40 minutes) ..."
-    $installArgs = "-k -t $OpsManagerHostname -u $OpsManagerAdminUsername -p $OpsManagerAdminPassword apply-changes --product-name $TKGIProductName"
+    $installArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "apply-changes". "--product-name", "$TKGIProductName")
     if($debug) { My-Logger "${OMCLI} $installArgs"}
-    $output = Start-Process -FilePath $OMCLI -ArgumentList $installArgs -Wait -RedirectStandardOutput $verboseLogFile
+    & $OMCLI $installArgs 2>&1 >> $verboseLogFile
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Previous step failed. Please see the following log for details:" $verboseLogFile
+        exit
+    }
 
 }
 
 $EndTime = Get-Date
 $duration = [math]::Round((New-TimeSpan -Start $StartTime -End $EndTime).TotalMinutes,2)
 
-My-Logger "Tanzu Platform for Cloud Foundry deployment complete!"
+My-Logger "Tanzu Platform deployment complete!"
 My-Logger "StartTime: $StartTime"
 My-Logger "  EndTime: $EndTime"
 My-Logger " Duration: $duration minutes"
