@@ -458,7 +458,7 @@ if($setupTPCF -eq 1) {
 
     # Upload tile
     My-Logger "Uploading TPCF tile to Tanzu Ops Manager (can take up to 15 mins) ..."
-    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "upload-product", "--product", "$TPCFTile")
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "upload-product", "--product", "$TPCFTile", "-r", "3600")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     & $OMCLI $configArgs 2>&1 >> $verboseLogFile
     if ($LASTEXITCODE -ne 0) {
@@ -568,7 +568,7 @@ if($setupPostgres -eq 1) {
 
     # Upload tile
     My-Logger "Uploading Postgres tile to Tanzu Ops Manager ..."
-    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "upload-product", "--product", "$PostgresTile")
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "upload-product", "--product", "$PostgresTile", "-r", "3600")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     & $OMCLI $configArgs 2>&1 >> $verboseLogFile
     if ($LASTEXITCODE -ne 0) {
@@ -640,7 +640,7 @@ if($setupGenAI -eq 1) {
 
     # Upload tile
     My-Logger "Uploading GenAI tile to Tanzu Ops Manager ..."
-    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "upload-product", "--product", "$GenAITile")
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "upload-product", "--product", "$GenAITile", "-r", "3600")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     & $OMCLI $configArgs 2>&1 >> $verboseLogFile
     if ($LASTEXITCODE -ne 0) {
@@ -725,7 +725,7 @@ if($setupTKGI -eq 1) {
 
     # Upload tile 
     My-Logger "Uploading TKGi tile to Tanzu Ops Manager ..."
-    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "upload-product", "--product", "$TKGITile")
+    $configArgs = @("-k", "-t", "$OpsManagerHostname", "-u", "$OpsManagerAdminUsername", "-p", "$OpsManagerAdminPassword", "upload-product", "--product", "$TKGITile", "-r", "3600")
     if($debug) { My-Logger "${OMCLI} $configArgs"}
     & $OMCLI $configArgs 2>&1 >> $verboseLogFile
     if ($LASTEXITCODE -ne 0) {
