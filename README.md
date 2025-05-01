@@ -66,6 +66,9 @@ Networking
  
 - NTP service
 
+- Firewall
+	- Ability to reach ollama.com so can download models
+
 Workstation/jump-host
 - [Powershell 7](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows) or later installed
 - [VMware PowerCLI](https://techdocs.broadcom.com/us/en/vmware-cis/vcf/power-cli/latest/powercli/installing-vmware-vsphere-powercli/install-powercli.html) installed eg `Install-Module VMware.PowerCLI -Scope CurrentUser`
@@ -153,11 +156,15 @@ $InstallTanzuAI = $false
 
 # Full Path to Postgres and GenAI tiles (required for Tanzu AI Solutions)
 $PostgresTile = "C:\Users\Administrator\Downloads\TPCF\postgres-10.0.0-build.31.pivotal"   #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware+Tanzu+for+Postgres+on+Cloud+Foundry
-$GenAITile    = "C:\Users\Administrator\Downloads\TPCF\genai-10.0.2.pivotal"               #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=GenAI%20on%20Tanzu%20Platform%20for%20Cloud%20Foundry
+$GenAITile    = "C:\Users\Administrator\Downloads\TPCF\genai-10.0.3.pivotal"               #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=GenAI%20on%20Tanzu%20Platform%20for%20Cloud%20Foundry
 
 # Tanzu AI Solutions config 
 $OllamaChatModel = "gemma2:2b"
 $OllamaEmbedModel = "nomic-embed-text"
+
+# Deploy a model with chat and tools capabilities?  note; a vm will be created with 16 vCPU and 32 GB mem to run the model
+$ToolsModel = $false
+$OllamaChatToolsModel = "mistral-nemo:12b-instruct-2407-q4_K_M"
 ```
 
 If wish to install Tanzu Kubernetes Grid integrated edition, change the flag to $true and update the following parameters where required
