@@ -96,11 +96,15 @@ $InstallTanzuAI = $false
 
 # Full Path to Postgres and GenAI tiles (required for Tanzu AI Solutions)
 $PostgresTile = "C:\Users\Administrator\Downloads\TPCF\postgres-10.0.0-build.31.pivotal"   #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware+Tanzu+for+Postgres+on+Cloud+Foundry
-$GenAITile    = "C:\Users\Administrator\Downloads\TPCF\genai-10.0.2.pivotal"               #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=GenAI%20on%20Tanzu%20Platform%20for%20Cloud%20Foundry
+$GenAITile    = "C:\Users\Administrator\Downloads\TPCF\genai-10.0.3.pivotal"               #Download from https://support.broadcom.com/group/ecx/productdownloads?subfamily=GenAI%20on%20Tanzu%20Platform%20for%20Cloud%20Foundry
 
 # Tanzu AI Solutions config 
 $OllamaChatModel = "gemma2:2b"
 $OllamaEmbedModel = "nomic-embed-text"
+
+# Deploy a model with chat and tools capabilities?  note; a vm will be created with 16 vCPU and 32 GB mem to run the model
+$ToolsModel = $false
+$OllamaChatToolsModel = "mistral-nemo:12b-instruct-2407-q4_K_M"
 
 #######################################
 # Install Tanzu Kubernetes Grid integrated edition (TKGi)?
@@ -659,7 +663,8 @@ if($setupGenAI -eq 1) {
     }
 
     # Create GenAI config yaml
-    $GenAIPayload = @"
+    if($ToolsModel -eq 0) {
+        $GenAIPayload = @"
 ---
 product-name: genai
 product-properties:
@@ -668,14 +673,16 @@ product-properties:
     - azs:
       - $BOSHAZAssignment
       model_capabilities:
-      - chat
-      model_name: $OllamaChatModel
+      - embedding
+      model_name: $OllamaEmbedModel
+      plan_name: nomic-embed-text
+      plan_description: A high-performing open embedding model
       vm_type: cpu
     - azs:
       - $BOSHAZAssignment
       model_capabilities:
-      - embedding
-      model_name: $OllamaEmbedModel
+      - chat
+      model_name: $OllamaChatModel
       vm_type: cpu
   .properties.database_source.service_broker.name:
     value: postgres
@@ -690,8 +697,66 @@ network-properties:
     name: $BOSHNetworkAssignment
   singleton_availability_zone:
     name: $BOSHAZAssignment
-
 "@
+    } else {
+            $GenAIPayload = @"
+---
+product-name: genai
+product-properties:
+  .errands.ollama_models:
+    value:
+    - azs:
+      - $BOSHAZAssignment
+      model_name: $OllamaEmbedModel
+      model_capabilities:
+      - embedding
+      plan_name: nomic-embed-text
+      plan_description: A high-performing open embedding model
+      vm_type: cpu
+    - azs:
+      - $BOSHAZAssignment
+      model_name: $OllamaChatToolsModel
+      model_capabilities:
+      - chat
+      - tools
+      ollama_keep_alive: "-1"
+      ollama_num_parallel: 1
+      ollama_context_length: 131072
+      ollama_kv_cache_type: q4_0
+      ollama_flash_attention: true
+      plan_name: mistral-nemo
+      plan_description: mistral-nemo-12b-instruct-2407-q4_K_M with chat and tool capabilities
+      disk_type: "153600"
+      vm_type: cpu-2xlarge
+  .errands.vsphere_vm_types:
+    value:
+    - cpu: 8
+      ephemeral_disk: 65536
+      name: cpu
+      processing_technology: cpu
+      ram: 32768
+      root_disk: 25
+    - cpu: 16
+      ephemeral_disk: 65536
+      name: cpu-2xlarge
+      processing_technology: cpu
+      ram: 32768
+      root_disk: 25
+  .properties.database_source.service_broker.name:
+    value: postgres
+  .properties.database_source.service_broker.plan_name:
+    value: on-demand-postgres-db
+network-properties:
+  network:
+    name: $BOSHNetworkAssignment
+  other_availability_zones:
+  - name: $BOSHAZAssignment
+  service_network:
+    name: $BOSHNetworkAssignment
+  singleton_availability_zone:
+    name: $BOSHAZAssignment
+"@
+    }
 
     $GenAIyaml = "genai-config.yaml"
     $GenAIPayload > $GenAIyaml
